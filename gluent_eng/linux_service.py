@@ -106,7 +106,7 @@ class LinuxService(object):
         """ Execute linux command, validate and return result
         """
         if self._linux.execute(cmd, user=user):
-            success = self._linux.success and not self._linux.stderr
+            success = self._linux.success and 0 == self._linux.returncode
             return success, self._linux.stdout
         else:
             logger.warn("Error: %s executing linux command: %s" % (self._linux.stderr, cmd))
