@@ -1,0 +1,137 @@
+mysqld:
+    sequence: 0
+    user: root
+    start: service mysqld start
+    stop: service mysqld stop
+    status: service mysqld status
+    pid: cat /var/run/mysqld/mysqld.pid
+
+hdfs-namenode:
+    sequence: 1
+    user: root
+    start: service hadoop-hdfs-namenode start
+    stop: service hadoop-hdfs-namenode stop
+    status: service hadoop-hdfs-namenode status
+    pid: cat /var/run/hadoop-hdfs/hadoop-hdfs-namenode.pid
+
+hdfs-datanode:
+    sequence: 2
+    user: root
+    start: service hadoop-hdfs-datanode start
+    stop: service hadoop-hdfs-datanode stop
+    status: service hadoop-hdfs-datanode status
+    pid: cat /var/run/hadoop-hdfs/hadoop-hdfs-datanode.pid
+
+
+hdfs-secondarynamenode:
+    sequence: 3
+    user: root
+    start: service hadoop-hdfs-secondarynamenode start
+    stop: service hadoop-hdfs-secondarynamenode stop
+    status: service hadoop-hdfs-secondarynamenode status
+    pid: cat /var/run/hadoop-hdfs/hadoop-hdfs-secondarynamenode.pid
+
+
+zookeeper-server:
+    sequence: 10
+    user: root
+    start: service zookeeper-server start
+    stop: service zookeeper-server stop
+    status: service zookeeper-server status
+    pid: cat /var/run/zookeeper/zookeeper-server.pid
+
+yarn-resourcemanager:
+    sequence: 11
+    user: root
+    start: service hadoop-yarn-resourcemanager start
+    stop: service hadoop-yarn-resourcemanager stop
+    status: service hadoop-yarn-resourcemanager status
+    pid: cat /var/run/hadoop-yarn/yarn-yarn-resourcemanager.pid
+
+yarn-nodemanager:
+    sequence: 12
+    user: root
+    start: service hadoop-yarn-nodemanager start
+    stop: service hadoop-yarn-nodemanager stop
+    status: service hadoop-yarn-nodemanager status
+    pid: cat /var/run/hadoop-yarn/yarn-yarn-nodemanager.pid
+
+mapred-jobhistory:
+    sequence: 13
+    user: root
+    start: service hadoop-mapreduce-historyserver start
+    stop: service hadoop-mapreduce-historyserver stop
+    status: service hadoop-mapreduce-historyserver status
+    pid: cat /var/run/hadoop-mapreduce/mapred-mapred-historyserver.pid
+
+hive-metastore:
+    sequence: 21
+    user: root
+    start: service hive-metastore start
+    stop: service hive-metastore stop
+    status: service hive-metastore status
+    pid: cat /var/run/hive/hive-metastore.pid
+
+hive-server2:
+    sequence: 22
+    user: root
+    start: service hive-server2 start
+    stop: service hive-server2 stop
+    status: service hive-server2 status
+    pid: cat /var/run/hive/hive-server2.pid
+
+hive-webhcat:
+    sequence: 23
+    user: root
+    start: service hive-webhcat-server start
+    stop: service hive-webhcat-server stop
+    status: service hive-webhcat-server status
+    pid: /usr/java/latest/bin/jps -ml | grep hive-hcatalog | awk '{print \$1}'
+
+impala-server:
+    sequence: 31
+    user: root
+    start: service impala-server start
+    stop: service impala-server stop
+    status: service impala-server status
+    pid: cat /var/run/impala/impalad-impala.pid
+
+impala-catalog:
+    sequence: 32
+    user: root
+    start: service impala-catalog start
+    stop: service impala-catalog stop
+    status: service impala-catalog status
+    pid: cat /var/run/impala/catalogd-impala.pid
+
+impala-state-store:
+    sequence: 33
+    user: root
+    start: service impala-state-store start
+    stop: service impala-state-store stop
+    status: service impala-state-store status
+    pid: cat /var/run/impala/statestored-impala.pid
+
+spark-master:
+    sequence: 41
+    user: root
+    start: service spark-master start
+    stop: service spark-master stop
+    status: service spark-master status
+    pid: cat /var/run/spark/spark-master.pid
+
+spark-worker:
+    sequence: 42
+    user: root
+    start: service spark-worker start
+    stop: service spark-worker stop
+    status: service spark-worker status
+    pid: cat /var/run/spark/spark-worker.pid
+
+spark-history-server:
+    sequence: 43
+    user: root
+    start: service spark-history-server start
+    stop: service spark-history-server stop
+    status: service spark-history-server status
+    pid: cat /var/run/spark/spark-history-server.pid
