@@ -8,7 +8,7 @@ zookeeper-server:
 
 kafka-server:
     sequence: 10
-    user: oracle
+    user: kafka
     start: ${KAFKA_HOME}/bin/kafka-server-start ${KAFKA_HOME}/etc/kafka/server.properties >/var/log/kafka/kafka-server-confluent.log 2>&1 &
     stop: ${KAFKA_HOME}/bin/kafka-server-stop
     status: ps --no-headers -p $(ps ax | grep -i 'io\.confluent\.support\.metrics\.SupportedKafka' | grep java | grep -v grep | awk '{print $1}')
@@ -17,7 +17,7 @@ kafka-server:
 
 kafka-schema-registry:
     sequence: 11
-    user: oracle
+    user: kafka
     start: ${KAFKA_HOME}/bin/schema-registry-start ${KAFKA_HOME}/etc/schema-registry/schema-registry.properties >/var/log/kafka/kafka-schema-registry.log 2>&1 &
     stop: ${KAFKA_HOME}/bin/schema-registry-stop
     status: ps --no-headers -p $(ps ax | grep -Pi '(io.confluent.kafka.schemaregistry.rest.Main)|(io.confluent.kafka.schemaregistry.rest.SchemaRegistryMain)' | grep java | grep -v grep | awk '{print $1}')
@@ -25,7 +25,7 @@ kafka-schema-registry:
 
 kafka-rest:
     sequence: 12
-    user: oracle
+    user: kafka
     start: ${KAFKA_HOME}/bin/kafka-rest-start ${KAFKA_HOME}/etc/kafka-rest/kafka-rest.properties >/var/log/kafka/kafka-rest.log 2>&1 &
     stop: ${KAFKA_HOME}/bin/kafka-rest-stop
     status: ps --no-headers -p $(ps ax | grep -Pi '(kafkarest\.Main)|(kafkarest\.KafkaRestMain)' | grep java | grep -v grep | awk '{print $1}')
@@ -33,8 +33,8 @@ kafka-rest:
 
 connect-standalone:
     sequence: 20
-    user: oracle
-    start: ${KAFKA_HOME}/bin/connect-standalone ${KAFKA_HOME}/etc/schema-registry/connect-avro-standalone.properties ${KAFKA_HOME}/etc/kafka-connect-jdbc/oracle.properties >/var/log/kafka/kafka-connect-snatdalone.log 2>&1 &
+    user: kafka
+    start: ${KAFKA_HOME}/bin/connect-standalone ${KAFKA_HOME}/etc/schema-registry/connect-avro-standalone.properties ${KAFKA_HOME}/etc/kafka-connect-jdbc/kafka.properties >/var/log/kafka/kafka-connect-snatdalone.log 2>&1 &
     stop: ps --no-headers -p $(ps ax | grep -Pi 'org.apache.kafka.connect.cli.ConnectStandalone' | grep java | grep -v grep | awk '{print $1}') | xargs kill
     status: ps --no-headers -p $(ps ax | grep -Pi 'org.apache.kafka.connect.cli.ConnectStandalone' | grep java | grep -v grep | awk '{print $1}')
     pid: ps ax | grep -Pi 'org.apache.kafka.connect.cli.ConnectStandalone' | grep java | grep -v grep | awk '{print \$1}'
