@@ -1,13 +1,13 @@
 # Introduction
 
-**ptail** is similar to UNIX 'tail -f', but uses processes as a starting point.
+**ptail** is similar to UNIX **tail -f**, but uses 'processes' as a starting point.
 
-I.e. instead of specifying (log) files directly, you supply 'pids' or 'name patterns' of processes that you want to monitor.
+That is: 
 
-ptail will auto discover (text) log files open by the processes and will start multi tailing them.
-
-(tailed) Log files can be customized with colors, labels and 'searcheable formats'.
-ptail also supports line filtering and highlighting by regular expressions.
+1. You supply 'pids' or 'name patterns' of processes that you want to monitor
+2. 'ptail' discovers (text) log files opened by these processes ..
+3. .. and starts 'following' them simultaneously, color coding output from each file
+4. .. while optionally, filtering and/or highlighting the output
 
 ![Ptail Example](ptail-example.png)
 
@@ -117,13 +117,13 @@ They are processed in the order they appear in configuration file and the first 
 
 # Privileges
 
-ptail discovers log files by reading through **/proc/pid/fd**, so it needs access to these directories (**sudo -u root** by default, you can adjust user name with **--user** parameter).
+'ptail' discovers log files by reading through '/proc/pid/fd' entries, so it needs access to these directories ('sudo -u root' by default, you can adjust 'sudo' user name with '--user' parameter).
 
 It also makes use of standard Linux commands, such as: ps, grep, file and sudo.
 
 # Current limitations and assumptions
 
-1. ptail is designed to work on Linux (however, presumably it should work on any UNIX that supports /proc/pid/fd)
+1. 'ptail' is designed to work on Linux (however, presumably it should work on any UNIX that supports '/proc/pid/fd')
 2. The tool is best suited to follow files that are either always open by the process or open/close infrequently
-3. At the moment, ptail is a single host tool (although, extending it to 'a cluster of hosts' is planned)
-4. It would be cool to autodiscover log formats as well, but alas, for now 'extended format' has to be supplied in config file
+3. At the moment, 'ptail' is a single host tool (although, extending it to 'a cluster of hosts' is planned)
+4. It would be cool to autodiscover log 'formats' as well, but alas, for now 'format' has to be supplied in configuration file
