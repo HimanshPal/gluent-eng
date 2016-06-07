@@ -41,6 +41,9 @@ METHOD_PID = 'pid'
 METHOD_NAME_REGEX = 'name'
 ALLOWED_METHODS = (METHOD_PID, METHOD_NAME_REGEX)
 
+# Log types
+LOG_TYPE_TEXT = 'text'
+LOG_TYPE_BINARY = 'binary'
 
 ###############################################################################
 # LOGGING
@@ -85,8 +88,8 @@ class ProcessLogs(object):
         # Discover various host names (relevant for log parsing)
         self._host_names = self._get_host_names()
     
-        # Known binary logs 'cache'
-        self._known_binary_logs = {}
+        # Known logs 'cache'
+        self._known_logs = {}
 
         # 'Default' log filter
         self._log_filter = log_filter
@@ -198,10 +201,16 @@ class ProcessLogs(object):
 
             Calls UNIX 'file' command
         """
-        if file_name in self._known_binary_logs:
-            # Very expensive to run 'file' command, so we avoid it if log was already 'discovered: binary'
-            logger.debug("File: %s is a previously discovered binary file" % file_name)
-            return False
+        if file_name in self._known_logs:
+            # Very expensive to run 'file' command, so we avoid it if log was already evaluated
+            log_type = self._known_logs[file_name]
+            logger.debug("File: %s was previously discovered to be: %s" % (file_name, log_type))
+            if LOG_TYPE_TEXT == log_type:
+                return True
+            elif LOG_TYPE_BINARY == log_type:
+                return False
+            else:
+                raise ProcessLogsException("Invalid log type: %s for log: %s" % (log_type, file_name))
 
         logger.debug("Running 'file' command to detect if: %s is a text file" % file_name)
         cmd = "file -i %s" % file_name
@@ -221,9 +230,11 @@ class ProcessLogs(object):
         # /logs/state-change.log: text/plain; charset=us-ascii
         if ': text' in result:
             logger.debug("File: %s is TEXT" % file_name)
+            self._known_logs[file_name] = LOG_TYPE_TEXT
             return True
         else:
             logger.debug("File: %s is NOT TEXT" % file_name)
+            self._known_logs[file_name] = LOG_TYPE_BINARY
             return False
 
 
