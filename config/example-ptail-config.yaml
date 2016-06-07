@@ -1,3 +1,26 @@
+########################################################################################
+# Example 'ptail' configuration file
+# 
+# Contents:
+#
+# file-pattern:
+#     color: Log color (based on: https://pypi.python.org/pypi/termcolor)
+#         Can be either direct color: 'grey', 'blue', 'green' etc 
+#         or "highlighted" color: 'grey_on_red', 'white_on_blue' etc
+#         If not supplied, color is auto assigned
+#
+#     label: Log 'label', a.k.a. 'short name'
+#         i.e. 'controller.log' in the line below:
+#         [controller.log] [2016-06-07 17:56:13,313] TRACE [Controller 0]: leader imbalance ratio for broker 0 is 0.000000
+#         If not supplied, 'label' is auto constructed from log name
+#
+#     format: Log line structure, a.k.a. 'format'
+#         'Named' regular expression (http://www.regular-expressions.info/named.html) that divides log line into 'columns'
+#         If not supplied, a single 'text' column is assumed (a.k.a: '^(?P<text>.*)$')
+#
+# 'file-pattern's are matched to (log) file names in the order they appear in the file
+# The 1st match wins (so, order patterns from specific to generic)
+########################################################################################
 /tmp/oracle/hive.log:
     color: green
     label: client

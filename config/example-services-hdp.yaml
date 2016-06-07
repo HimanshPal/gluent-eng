@@ -1,0 +1,94 @@
+########################################################################################
+# Example 'linux-service' configuration file
+#     for 'Hortonworks 2.3.0 hadoop distribution'
+#
+# Contents:
+#
+# service-name:
+#     sequence: order of start/stop, must be a number
+#         Mandatory, allowed to have 'gaps'
+#         Services will be started in the increasing order, stopped in the decreasing order
+#
+#     start: Start command
+#     stop: Stop command
+#     status: Status command
+#         Mandatory
+#         (shell) commands to start, stop or check status
+#
+#     user: UNIX user to run command as (through 'sudo' for now)
+#         Optional
+#         If not supplied, assumes 'current' user
+#
+#     pid: Command to extract service 'pid'
+#         Semi-optional, used with 'extended status' command to look for ports/logs
+#
+#     wait: Seconds to wait after start/stop command
+#         Optional, designed to let current service status 'propagate' before working on the next service
+#         If not supplied, assumes 'no wait'
+#
+# Order of entries is not important (although, we recommend to keep entries in the order of sequence)
+#########################################################################################
+
+postgresql:
+    sequence: 0
+    user: root
+    start: service postgresql start
+    stop: service postgresql stop
+    status: service postgresql status | grep 'is running'
+    pid: cat /var/lib/pgsql/data/postmaster.pid | head -1
+
+hdfs-namenode:
+    sequence: 1
+    user: hdfs
+    start: /usr/hdp/current/hadoop-hdfs-namenode/../hadoop/sbin/hadoop-daemon.sh --config /etc/hadoop/conf start namenode
+    stop: /usr/hdp/current/hadoop-hdfs-namenode/../hadoop/sbin/hadoop-daemon.sh --config /etc/hadoop/conf stop namenode
+    status: ps --no-headers -p $(cat /var/run/hadoop/hdfs/hadoop-hdfs-namenode.pid)
+    pid: cat /var/run/hadoop/hdfs/hadoop-hdfs-namenode.pid
+
+hdfs-datanode:
+    sequence: 2
+    user: hdfs
+    start: /usr/hdp/current/hadoop-hdfs-datanode/../hadoop/sbin/hadoop-daemon.sh --config /etc/hadoop/conf start datanode
+    stop: /usr/hdp/current/hadoop-hdfs-datanode/../hadoop/sbin/hadoop-daemon.sh --config /etc/hadoop/conf stop datanode
+    status: ps --no-headers -p $(cat /var/run/hadoop/hdfs/hadoop-hdfs-datanode.pid)
+    pid: cat /var/run/hadoop/hdfs/hadoop-hdfs-datanode.pid
+
+yarn-resourcemanager:
+    sequence: 3
+    user: yarn
+    start: /usr/hdp/current/hadoop-yarn-resourcemanager/sbin/yarn-daemon.sh --config /etc/hadoop/conf start resourcemanager
+    stop: /usr/hdp/current/hadoop-yarn-resourcemanager/sbin/yarn-daemon.sh --config /etc/hadoop/conf stop resourcemanager
+    status: ps --no-headers -p $(cat /var/run/hadoop/yarn/yarn-yarn-resourcemanager.pid)
+    pid: cat /var/run/hadoop/yarn/yarn-yarn-resourcemanager.pid
+
+yarn-nodemanager:
+    sequence: 4
+    user: yarn
+    start: /usr/hdp/current/hadoop-yarn-nodemanager/sbin/yarn-daemon.sh --config /etc/hadoop/conf start nodemanager
+    stop: /usr/hdp/current/hadoop-yarn-nodemanager/sbin/yarn-daemon.sh --config /etc/hadoop/conf stop nodemanager
+    status: ps --no-headers -p $(cat /var/run/hadoop/yarn/yarn-yarn-nodemanager.pid)
+    pid: cat /var/run/hadoop/yarn/yarn-yarn-nodemanager.pid
+
+mapred-jobhistory:
+    sequence: 5
+    user: yarn
+    start: /usr/hdp/current/hadoop-mapreduce-historyserver/sbin/mr-jobhistory-daemon.sh --config /etc/hadoop/conf start historyserver
+    stop: /usr/hdp/current/hadoop-mapreduce-historyserver/sbin/mr-jobhistory-daemon.sh --config /etc/hadoop/conf stop historyserver
+    status: ps --no-headers -p $(cat /var/run/hadoop/mapreduce/yarn/mapred-yarn-historyserver.pid)
+    pid: cat /var/run/hadoop/mapreduce/yarn/mapred-yarn-historyserver.pid
+
+hive-metastore:
+    sequence: 6
+    user: hive
+    start: nohup /usr/hdp/current/hive-metastore/bin/hive --service metastore >/var/log/hive/hive-metastore.out 2>/var/log/hive/hive-metastore.log &
+    stop: kill \$(ps -u hive -f | grep HiveMetaStore | grep -v PID | grep -v grep | awk '{print \$2}')
+    status: ps -u hive -f | grep HiveMetaStore | grep -v PID | grep -v grep | awk '{print $2}'
+    pid: jps -ml | grep HiveMetaStore | awk '{print \$1}'
+
+hive-server2:
+    sequence: 7
+    user: hive
+    start: nohup /usr/hdp/current/hive-server2/bin/hiveserver2 >/var/log/hive/hive-server2.out 2> /var/log/hive/hive-server2.log &
+    stop: kill \$(ps -u hive -f | grep HiveServer2 | grep -v PID | grep -v grep | awk '{print \$2}')
+    status: ps -u hive -f | grep HiveServer2 | grep -v PID | grep -v grep | awk '{print $2}'
+    pid: jps -ml | grep HiveServer2 | awk '{print \$1}'

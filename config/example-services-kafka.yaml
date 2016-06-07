@@ -1,3 +1,34 @@
+########################################################################################
+# Example (mandatory) 'linux-service' configuration file
+#     for 'kafka services'
+#
+# Contents:
+#
+# service-name:
+#     sequence: order of start/stop, must be a number
+#         Mandatory, allowed to have 'gaps'
+#         Services will be started in the increasing order, stopped in the decreasing order
+#
+#     start: Start command
+#     stop: Stop command
+#     status: Status command
+#         Mandatory
+#         (shell) commands to start, stop or check status
+#
+#     user: UNIX user to run command as (through 'sudo' for now)
+#         Optional
+#         If not supplied, assumes 'current' user
+#
+#     pid: Command to extract service 'pid'
+#         Semi-optional, used with 'extended status' command to look for ports/logs
+#
+#     wait: Seconds to wait after start/stop command 
+#         Optional, designed to let current service status 'propagate' before working on the next service
+#         If not supplied, assumes 'no wait'
+#
+# Order of entries is not important (although, we recommend to keep entries in the order of sequence)
+########################################################################################
+
 zookeeper-server:
     sequence: 1
     user: root
