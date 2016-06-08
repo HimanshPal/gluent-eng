@@ -4,7 +4,7 @@
 
 ![linux-service example](linux-service-example.png)
 
-Each 'service' is defined as a collection of: 'start', 'stop' and 'status' commands in configuration file, i.e.:
+Each 'service' is defined as a collection of: 'start', 'stop' and 'status' commands in configuration file:
 
 ```YAML
 kafka-server:
@@ -135,11 +135,11 @@ kafka-server:
     wait: 2
 ```
 
-Commands are run in the current shell, so can include environment variables.
+Commands are run in the current shell, so can include *environment variables*.
 
 # Privileges
 
-In 'default' mode, linux-service does not need any special permissions, however if you supply 'user' keys to run services as specific users, make sure that current user has proper 'sudo' permissions.
+In 'default' mode, 'linux-service' does not need any special permissions, however if you supply 'user' keys to run services as specific users, make sure that current user has proper 'sudo' permissions.
 
 In 'extended' mode (i.e. when running 'myservice all -e status' command), linux-service needs access to /proc/pid/fd and /proc/pid/net (by default: 'sudo -u root', you can cotrol the user with --user parameter).
 
@@ -147,6 +147,6 @@ It also makes use of standard Linux commands, such as: ps, grep, cat, file and s
 
 # Current limitations and assumptions
 
-1. At the moment, linux-service only operates on a single host, through sudo when necessary (although, extending it for 'remote hosts' is planned)
+1. At the moment, 'linux-service' only operates on a single host, through sudo when necessary (although, extending it for 'remote hosts' is planned)
 2. It was only tested on Linux (but there is a good chance it should work on other OS-s as well with some minimal modifications).
-3. Extended mode assumes presense of (and access to) '/proc/pid/fd', /proc/pid/net', so it will not work on systems where these are not present.
+3. 'Extended status' mode assumes presense of (and access to): '/proc/pid/fd', '/proc/pid/net', so it will not work on systems where these are not present.
