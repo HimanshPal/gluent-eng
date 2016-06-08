@@ -29,7 +29,7 @@ class FileTailException(Exception): pass
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class FileTailer(object):

@@ -6,7 +6,7 @@ import argparse
 import logging
 import sys
 
-from .linux_service import LinuxService, LinuxServiceException
+from .linux_service import LinuxService, LinuxServiceException, DEFAULT_ROOT_USER
 from .process_logs import RE_DEFAULT_LOG_NAME_FILTER
 
 
@@ -19,14 +19,12 @@ PROG_BANNER = "SERVICE: Simplified Linux service interface"
 # Default logging level
 DEFAULT_LOGGING = "CRITICAL"
 
-# Default user to execute linux commands
-DEFAULT_USER='root'
 
 ###############################################################################
 # LOGGING
 ###############################################################################
 logger = logging.getLogger("service")
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 # -----------------------------------------------------------------------
@@ -59,8 +57,8 @@ def parse_args():
 
     parser.add_argument('-c', '--config-file', required=True, help="(service) Configuration file")
 
-    parser.add_argument('-u', '--user', required=False, default=DEFAULT_USER, \
-        help="User to run linux commands as. Default: %s" % DEFAULT_USER)
+    parser.add_argument('-u', '--root-user', required=False, default=DEFAULT_ROOT_USER, \
+        help="User to run 'privileged' linux commands as. Default: %s" % DEFAULT_ROOT_USER)
     parser.add_argument('-H', '--host', required=False, help="Host to run linux commands on. Default: localhost")
 
     parser.add_argument('-e', '--extended', required=False, action='store_true', help="Extended output")
@@ -80,8 +78,8 @@ def parse_args():
     # Args post-processing
     args.log_level = args.log_level.upper()
 
-    if args.extended and args.command not in ('status'):
-        raise LinuxServiceException("Extended mode only makes sense with 'status' command")
+    #if args.extended and args.command not in ('status'):
+    #    raise LinuxServiceException("Extended mode only makes sense with 'status' command")
 
     return args
 
@@ -100,7 +98,7 @@ def main():
     # Initialize service object
     srv = LinuxService(
         config_file = args.config_file,
-        user = args.user,
+        root_user = args.root_user,
         host = args.host,
         log_filter = args.log_filter,
         extended = args.extended,

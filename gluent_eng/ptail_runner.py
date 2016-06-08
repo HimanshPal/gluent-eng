@@ -28,7 +28,7 @@ from .process_logs import ProcessLogs, METHOD_PID, METHOD_NAME_REGEX, ALLOWED_ME
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class PtailRunner(object):
@@ -116,7 +116,8 @@ class PtailRunner(object):
             self._last_refresh + timedelta(seconds=self._refresh_interval) < now)
 
         if not self._logs_current or interval_expired:
-            self._logs_prev = {k: v for k, v in self._logs_current.items()} # Need a true {} copy
+            # self._logs_prev = {k: v for k, v in self._logs_current.items()} # Need a true {} copy 2.7+
+            self._logs_prev = dict((k, v) for k, v in self._logs_current.items()) # Need a true {} copy
             new_logs = self._get_new_logs()  # Get new logs from 'processes'
             if open_logs:
                 if self._adjust_logs(new_logs):  # Open/close files and set new self._logs_current

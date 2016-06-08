@@ -40,7 +40,7 @@ EXE_TYPE_SSH    = 'ssh'
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class LinuxCmd(object):
@@ -62,18 +62,21 @@ class LinuxCmd(object):
         Also remember: cmd, exec_type, user, host, etc
     """
 
-    def __init__(self, user=None, host=None, environment=None):
+    def __init__(self, user=None, host = None, environment=None, shell=DEFAULT_SHELL):
         """ CONSTRUCTOR
         """
 
         self._cmd = None          # (last) Linux command
-        self._environment = environment  # ... environment (extra os vars to use)
-        self._user = user                # ... user
-        self._host = host                # ... host
+
+        # Inputs
+        self._default_environment = environment  # ... environment (extra os vars to use)
+        self._default_user = user                # ... user
+        self._default_host = host                # ... host
+        self._default_shell = shell              # ... execution 'shell' (bash, ksh, etc)
 
         self._exe_type = None     # ... execution 'type' (direct, ssh, sudo)
-        self._shell = None        # ... execution 'shell' (bash, ksh, etc)
 
+        # Returns:
         self._stdout = None       # ... stdout
         self._stderr = None       # ... stderr
         self._returncode = None   # ... return code
@@ -193,7 +196,7 @@ class LinuxCmd(object):
 
             Returns: True if successful execution, False otherwise
         """
-        success, stdout, stderr, returncode = None, None, None, None
+        success, stdout, stderr, returncode = False, None, None, None
 
         logger.debug("Preparing to run UNIX command: %s" % self._cmd)
 
@@ -205,7 +208,7 @@ class LinuxCmd(object):
         logger.debug("Running UNIX command: %s. Type: %s" % (self._cmd, self._exe_type))
         try:
             process = subprocess.Popen(self._cmd, shell=True, env=self._set_environment(),
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, )
 
             stdout, stderr = process.communicate()
             stdout, stderr = stdout.strip(), stderr.strip()
@@ -329,14 +332,10 @@ class LinuxCmd(object):
             raise LinuxCmdException("Command is NOT supplied in LinuxCmd.execute()")
 
         self._cmd = cmd
-        if user:
-            self._user = user
-        if environment:
-            self._environment = environment
-        if host:
-            self._host = host
-        if shell:
-            self._shell = shell
+        self._user = user or self._default_user
+        self._environment = environment or self._default_environment
+        self._host = host or self._default_host
+        self._shell = shell or self._default_shell
 
         self._success = self._execute()
 

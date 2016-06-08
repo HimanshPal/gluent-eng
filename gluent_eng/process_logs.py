@@ -44,12 +44,13 @@ ALLOWED_METHODS = (METHOD_PID, METHOD_NAME_REGEX)
 # Log types
 LOG_TYPE_TEXT = 'text'
 LOG_TYPE_BINARY = 'binary'
+LOG_TYPE_EMPTY = 'empty'
 
 ###############################################################################
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class ProcessLogs(object):
@@ -209,7 +210,7 @@ class ProcessLogs(object):
                 return True
             elif LOG_TYPE_BINARY == log_type:
                 return False
-            else:
+            elif LOG_TYPE_EMPTY != log_type:
                 raise ProcessLogsException("Invalid log type: %s for log: %s" % (log_type, file_name))
 
         logger.debug("Running 'file' command to detect if: %s is a text file" % file_name)
@@ -228,7 +229,11 @@ class ProcessLogs(object):
         # Examples:
         # /kafka-logs/__consumer_offsets-24/00000000000000000000.log: application/x-empty; charset=binary
         # /logs/state-change.log: text/plain; charset=us-ascii
-        if ': text' in result:
+        if 'x-empty' in result:
+            logger.debug("File: %s is still EMPTY" % file_name)
+            self._known_logs[file_name] = LOG_TYPE_EMPTY
+            return False
+        elif ': text' in result:
             logger.debug("File: %s is TEXT" % file_name)
             self._known_logs[file_name] = LOG_TYPE_TEXT
             return True

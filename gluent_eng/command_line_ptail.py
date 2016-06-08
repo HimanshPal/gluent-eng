@@ -42,7 +42,7 @@ DEFAULT_USER = 'root'
 # LOGGING
 ###############################################################################
 logger = logging.getLogger("ptail")
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 # -----------------------------------------------------------------------
@@ -157,7 +157,8 @@ def parse_args():
     # Compile 'filters'
     if args.filters:
         filters = make_where_dict(",".join(args.filters))
-        args.filters = {_: re.compile(filters[_]) for _ in filters}
+        #args.filters = {_: re.compile(filters[_]) for _ in filters} 2.7+
+        args.filters = dict((k, re.compile(filters[k])) for k in filters)
     elif args.grep:
         args.filters = {'text': re.compile(args.grep)}
 

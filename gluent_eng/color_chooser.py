@@ -27,7 +27,7 @@ BG_COLORS = ('green', 'yellow', 'blue', 'magenta', 'cyan', 'white')
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class ColorChooser(object):
