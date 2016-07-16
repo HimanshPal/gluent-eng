@@ -6,9 +6,11 @@ Currently in the toolbox:
 - [ptail](doc/ptail.md): Discover logs for running processes and multi-tail them
 - [linux-service](doc/linux-service.md): Manage *adhoc commands* as though they are *linux services*
 
-# Installation
+# Requires
 
-(requires python 2.7 to be present)
+- Python: 2.6, 2.7
+
+# Installation
 
 ```Bash
 git clone https://github.com/gluent/gluent-eng
