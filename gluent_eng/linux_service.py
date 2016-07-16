@@ -36,15 +36,22 @@ class LinuxServiceException(Exception): pass
 # Extract port # and pid from 'netstat -lpn' output
 RE_NETSTAT_PORT = re.compile('^(tcp|udp)\s+\d+\s+\d+\s+(\S+:\d+).*\s+(\d+)\/\S+$')
 
-# Default 'process execution' user
-DEFAULT_USER='root'
+# (UNIX) Process id
+RE_PID = re.compile('^\d+$')
+
+# Default 'superuser' to execute 'restricted permissions' commands
+DEFAULT_ROOT_USER='root'
+
+# Linux service 'environment flag'
+# a.k.a name of 'injected' env variable that contains 'service name'
+LINUX_SERVICE_NAME_FLAG='GL_LINUX_SERVICE'
 
 
 ###############################################################################
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class LinuxService(object):
@@ -52,7 +59,7 @@ class LinuxService(object):
     """
     SUPPORTED_COMMANDS = ['start', 'stop', 'status']
 
-    def __init__(self, config_file, user=DEFAULT_USER, host=None, log_filter=None, extended=False, wait=None):
+    def __init__(self, config_file, root_user=DEFAULT_ROOT_USER, host=None, log_filter=None, extended=False, wait=None):
         """ CONSTRUCTOR
             
             Parameters:
@@ -71,15 +78,15 @@ class LinuxService(object):
         self._services = self._read_config(config_file)
 
         # Linux command 'runner'
-        self._linux = LinuxCmd(user=user, host=host)
-        self._user = user
+        self._linux = LinuxCmd(host=host)
+        self._root_user = root_user
         self._host = host
         self._wait = float(wait) if wait is not None else None
 
         if extended:
             self._extended = True
             self._ports = self._get_all_ports()
-            self._plogs = ProcessLogs(user=user, host=host, log_filter=log_filter)
+            self._plogs = ProcessLogs(user=self._root_user, host=self._host, log_filter=log_filter)
         else:
             self._extended = False
             self._ports = {}
@@ -102,16 +109,16 @@ class LinuxService(object):
         return data
 
 
-    def _execute(self, cmd, user):
+    def _execute(self, cmd, user, env=None):
         """ Execute linux command, validate and return result
         """
-        if self._linux.execute(cmd, user=user):
+        if self._linux.execute(cmd, user=user, environment=env):
             success = self._linux.success and 0 == self._linux.returncode
             return success, self._linux.stdout
         else:
             logger.warn("Error: %s executing linux command: %s" % (self._linux.stderr, cmd))
             # All commands may 'fail' for a good reason
-            return None, None
+            return False, None
 
 
     def _wait_for_completion(self, service):
@@ -142,19 +149,70 @@ class LinuxService(object):
 
             If user entry does not exist, return None (i.e. "current user")
         """
-        user = self._user
+        user = None
 
         if service not in self._services:
             raise LinuxServiceException("Cannot find service: %s" % service)
 
         if 'user' in self._services[service]:
             user = self._services[service]['user']
-            logger.debug("Found user: %s for service: %s" % (user, service))
+            logger.info("Found user: %s for service: %s" % (user, service))
         else:
-            logger.debug("Specific user NOT found for service: %s. Assuming: 'current user'" % \
+            logger.info("Specific user NOT found for service: %s. Assuming: 'current user'" % \
                 service)
         
         return user
+
+
+    def _execute_pid_command(self, service, user, pid_cmd):
+        """ Execute 'specific' 'find pid' command for a service
+        """
+        pid = None
+
+        success, pid = self._execute(pid_cmd, user)
+        pid = pid.strip() if pid else pid
+
+        # And check if we actually found anything
+        # HAS TO BE a single pid
+        # Returning None rather than throwing an exception to facilitate
+        # normal processing when we cannot find 'working pid' (i.e. when the service is down)
+        if not success:
+            logger.warn("'find pid' command: %s for service: %s was unsuccessful" % (pid_cmd, service))
+        elif not pid:
+            # Might be OK, i.e. service is NOT running
+            logger.debug("'find pid' command: %s for service: %s returned empty string" % (pid_cmd, service))
+        elif not RE_PID.match(pid):
+            logger.warn("Result of 'find pid' command: %s for service: %s does not match expected PID format. Getting: [%s]" % \
+                (pid_cmd, service, pid))
+        else:
+            pid = int(pid)
+
+        return pid
+
+
+    def _find_pid_direct(self, service):
+        """ Find service PID directly by running user supplied command
+        """
+        if 'pid' not in self._services[service]:
+            logger.debug("Direct PID command not supplied for service: %s" % service)
+            return None
+
+        pid_cmd = self._services[service]['pid']
+        logger.info("Finding PID for service: %s directly by running: %s" % (service, pid_cmd))
+
+        user = self._get_user(service)
+        return self._execute_pid_command(service, user, pid_cmd)
+
+    def _find_pid_by_env_label(self, service):
+        """ Find service PID by looking at process environment variables
+            Processes started by LinuxService will have GL_LINUX_SERVICE='service' set
+        """
+        logger.info("Finding PID for service: %s by looking at %s environment variable" % \
+            (service, LINUX_SERVICE_NAME_FLAG))
+        pid_cmd = "ps -eww e | grep '%s=%s' | grep -v grep | awk '{print \$1}'" % \
+            (LINUX_SERVICE_NAME_FLAG, service)
+
+        return self._execute_pid_command(service, self._root_user, pid_cmd)
 
 
     def _find_pid(self, service):
@@ -162,25 +220,17 @@ class LinuxService(object):
         """
         logger.debug("Finding PID for service: %s" % service)
 
-        # We need to know how to find PID of the service:
-        #    that is, have the actual command in 'pid' entry of the config file
-        if 'pid' not in self._services[service]:
-            logger.warn("Do not know how to find PID for service: %s" % service)
-            return None
-
-        # Ok, let's run the command to find it
-        user = self._get_user(service)
-        success, pid = self._execute(self._services[service]['pid'], user)
+        pid = self._find_pid_direct(service)
+        if not pid:
+            pid = self._find_pid_by_env_label(service)
 
         # And check if we actually found anything
-        if not success or not pid:
-            logger.debug("Inable to find PID for service: %s" % service)
+        if not pid:
+            logger.warn("Unable to find PID for service: %s" % service)
             # Returning None rather than throwing an exception to facilitate
             # normal processing when we cannot find 'working pid' (i.e. when the service is down)
-            return None
-
-        pid = int(pid)
-        logger.debug("Found PID: %d for service: %s" % (pid, service))
+        else:
+            logger.info("Found PID: %d for service: %s" % (pid, service))
 
         return pid
 
@@ -191,7 +241,7 @@ class LinuxService(object):
         open_ports = {}
 
         cmd = "netstat -lpn | grep -P 'tcp|udp'"
-        success, result = self._execute(cmd, self._user)
+        success, result = self._execute(cmd, self._root_user)
 
         if success and result:
             for line in result.split('\n'):
@@ -249,14 +299,15 @@ class LinuxService(object):
             raise LinuxServiceException("Unsupported command: %s" % cmd)
 
         run_cmd = self._services[service][cmd]
-	logger.debug("Using '%s' command: '%s' for service: %s" % \
+        logger.debug("Using '%s' command: '%s' for service: %s" % \
             (cmd, run_cmd, service))
 
         # Grab 'user' if defined
         # Otherwise, use 'current' user
         user = self._get_user(service)
 
-        success, output = self._execute(run_cmd, user)
+        env = {LINUX_SERVICE_NAME_FLAG: service} if 'start' == cmd else None
+        success, output = self._execute(run_cmd, user, env)
 
         return success, output
 
@@ -312,6 +363,7 @@ class LinuxService(object):
         else:
             success, output = self._exec_service_command(service, 'start')
             self._print_status(service, success)
+            self._wait_for_completion(service)
 
         return success, output
 
@@ -329,6 +381,7 @@ class LinuxService(object):
         else:
             success, output = self._exec_service_command(service, 'stop')
             self._print_status(service, success)
+            self._wait_for_completion(service)
 
         return success, output
 
@@ -384,5 +437,3 @@ class LinuxService(object):
         # Execute the command(s)
         for service in service_list:
             getattr(self, cmd)(service)
-            if cmd in ('start', 'stop'):
-                self._wait_for_completion(service)

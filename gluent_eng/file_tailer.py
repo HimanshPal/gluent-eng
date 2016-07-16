@@ -29,7 +29,7 @@ class FileTailException(Exception): pass
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class FileTailer(object):
@@ -77,16 +77,21 @@ class FileTailer(object):
 
     def _open_at(self, file_name, open_at_top):
         """ Open file name either "at the top" or "at_the_end"
+
+            returns False if the file cannot be open
         """
 
         if not os.path.isfile(file_name):
-            raise FileTailException("Unable to locate file: %s" % file_name)
+            logger.warn("Unable to locate file: %s" % file_name)
+            return False
 
         logger.debug("Opening file: %s" % file_name)
         self._file_handle = open(file_name)
 
         if not open_at_top:
             self._file_handle.seek(0, 2) # Set position to the end of the file
+
+        return True
 
 
     def _format_line(self, line, line_format):
@@ -222,11 +227,13 @@ class FileTailer(object):
 
     def open(self, open_at_top):
         """ Open file
+
+            return False if the file cannot be opened for some reason
         """
         if not self._file_handle:
             print "[+ LOG] %s %s" % (self._label, self._color_line("Following log file: %s" % self._file_name))
             # logger.info("Opening log file: %s" % self._file_name)
-            self._open_at(self._file_name, open_at_top)
+            return self._open_at(self._file_name, open_at_top)
 
 
     def close(self):

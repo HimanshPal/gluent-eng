@@ -29,7 +29,7 @@ DEFAULT_LOG_ENTRY = '^(?P<text>.*)$'
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class LogSetup(object):
@@ -100,7 +100,8 @@ class LogSetup(object):
     def _compile_setup_patterns(self, setup):
         """ Regex compile setup patterns
         """
-        return {re.compile(_): setup[_] for _ in setup}
+        #return {re.compile(_): setup[_] for _ in setup} 2.7+ only
+        return dict((re.compile(k), setup[k]) for k in setup)
 
 
     def _get_setup(self, log_file):

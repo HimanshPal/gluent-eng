@@ -28,7 +28,7 @@ from .process_logs import ProcessLogs, METHOD_PID, METHOD_NAME_REGEX, ALLOWED_ME
 # LOGGING
 ###############################################################################
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler()) # Disabling logging by default
+#logger.addHandler(logging.NullHandler()) # Disabling logging by default
 
 
 class PtailRunner(object):
@@ -53,6 +53,9 @@ class PtailRunner(object):
         # Log handles
         self._logs_current = {}
         self._logs_prev = {}
+
+        # 'Bad logs' cache - mark files that cannot be opened so that not to process them again
+        self._bad_logs = {}
 
         logger.debug("PtailRunner() successfully initialized")
 
@@ -87,15 +90,23 @@ class PtailRunner(object):
 
         # Process 'added' logs
         for log in added_logs:
+            if log in self._bad_logs:
+                logger.debug("Log: %s is 'bad' (permissions ?). Not processing it" % log)
+                continue
+
             color, format, label = new_logs[log]['color'], new_logs[log]['format'], new_logs[log]['label']
             if self._simple_grep:
                 logger.debug("Simple 'grep' requested. Forcing trivial log line format")
                 format = DEFAULT_LOG_ENTRY
 
             logger.debug("Adding new log: %s" % log)
-            self._logs_current[log] = FileTailer(log, color, self._full_color, format, label)
-            self._logs_current[log].open(self._from_top)
-            adjusted = True
+            new_log = FileTailer(log, color, self._full_color, format, label)
+            if new_log.open(self._from_top):
+                self._logs_current[log] = new_log
+                adjusted = True
+            else:
+                logger.warn("Unable to open log: %s. Marking as 'bad'" % log)
+                self._bad_logs[log] = True
 
         # Process 'deleted' logs
         for log in deleted_logs:
@@ -116,7 +127,8 @@ class PtailRunner(object):
             self._last_refresh + timedelta(seconds=self._refresh_interval) < now)
 
         if not self._logs_current or interval_expired:
-            self._logs_prev = {k: v for k, v in self._logs_current.items()} # Need a true {} copy
+            # self._logs_prev = {k: v for k, v in self._logs_current.items()} # Need a true {} copy 2.7+
+            self._logs_prev = dict((k, v) for k, v in self._logs_current.items()) # Need a true {} copy
             new_logs = self._get_new_logs()  # Get new logs from 'processes'
             if open_logs:
                 if self._adjust_logs(new_logs):  # Open/close files and set new self._logs_current
